@@ -1,0 +1,18 @@
+{
+    "name": "coshi/preacher",
+    "type": "library",
+    "description": "Active record layer on top of doctrine dbal",
+    "keywords": ["activerecord", "database", "persistence","doctrine-dbal","queryobject"],
+    "homepage": "http://preacher.codesushi.co",
+    "license": "MIT",
+    "authors": [
+        {"name": "Krzysztof Ożóg", "email": "krzysztof.ozog@codesushi.co"},
+    ],
+    "require": {
+        "php": ">=5.3.3",
+        "doctrine/dbal": "dev-master"
+    },
+    "autoload": {
+        "psr-0": { "coshi\\Preacher": "lib/" }
+    },
+}
