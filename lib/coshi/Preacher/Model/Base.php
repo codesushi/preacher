@@ -82,8 +82,11 @@ abstract class Base
      */
     public function __get($key)
     {
-        if(method_exists($this, 'get'.static::camelize($key)) ) {
-            return call_user_func_array(array ($this, 'get'.static::camelize($key)),array() );
+        if (method_exists($this, 'get'.static::camelize($key))) {
+            return call_user_func_array(
+                array($this, 'get'.static::camelize($key)),
+                array()
+            );
 
         } elseif (array_key_exists($key, $this->fieldsValues)) {
             return $this->fieldsValues[$key];
@@ -123,8 +126,7 @@ abstract class Base
 
         if ($key == static::$primaryKey) {
 
-            if(static::$fields[static::$primaryKey] != 'integer')
-            {
+            if (static::$fields[static::$primaryKey] != 'integer') {
                 $this->fieldsValues[$key] = (string) $value;
             } else {
 
@@ -132,7 +134,10 @@ abstract class Base
             }
 
         } elseif(method_exists($this, 'set'.static::camelize($key)) ) {
-            call_user_func_array(array($this, 'set'.static::camelize($key)), array($value));
+            call_user_func_array(
+                array($this, 'set'.static::camelize($key)),
+                array($value)
+            );
 
         } elseif(array_key_exists($key, static::$fields)) {
             $this->fieldsValues[$key] = $value;
@@ -156,18 +161,24 @@ abstract class Base
         $types = array_values($types);
 
 
-        if(
+        if (
             isset($this->fieldsValues[static::$primaryKey])
             and $this->fieldsValues[static::$primaryKey]
         ) {
             $status = static::$conn->update(
                 static::$tableName,
                 $values,
-                array(static::$primaryKey => $this->fieldsValues[static::$primaryKey]),
+                array(
+                    static::$primaryKey => $this->fieldsValues[static::$primaryKey]
+                ),
                 $types
             );
         } else {
-            $status = static::$conn->insert(static::$tableName, $values, $types);
+            $status = static::$conn->insert(
+                static::$tableName,
+                $values,
+                $types
+            );
             $this->fieldsValues[static::$primaryKey] = static::$conn->lastInsertId();
         }
 
@@ -201,7 +212,7 @@ abstract class Base
         $qb->setParameter('id', $id, 'integer');
         $stmt = $qb->execute();
 
-        if($result = $stmt->fetch()) {
+        if ($result = $stmt->fetch()) {
             $class = static::getClass();
             $record = new $class;
             $record->hydrate($result);
@@ -222,7 +233,7 @@ abstract class Base
      */
     public function hydrate($values = array())
     {
-        foreach($values as $k=>$v) {
+        foreach ($values as $k => $v) {
             $this->{$k} = $v;
         }
         return $this;
@@ -237,18 +248,21 @@ abstract class Base
 
         $qb = static::getSelect();
 
-        foreach($conditions as $field => $value){
-            if(in_array($field, $fieldNames))
-            {
+        foreach ($conditions as $field => $value) {
+            if (in_array($field, $fieldNames)) {
                 $qb->andWhere(static::prefixField($field).' = :'.$field)
-                    ->bindParameter(':'.$field, $value, static::$fields[$field]);
+                    ->bindParameter(
+                        ':'.$field,
+                        $value,
+                        static::$fields[$field]
+                    );
             }
 
         }
 
         $qb->setMaxResults(1);
         $row = $qb->execute()->fetch();
-        if($row) {
+        if ($row) {
             $obj = static::getClass();
             $obj = new $obj();
             $obj->hydrate($row);
@@ -266,26 +280,29 @@ abstract class Base
 
         $qb = static::getSelect();
 
-        foreach($conditions as $field => $value){
-            if(in_array($field, $fieldNames))
-            {
+        foreach ($conditions as $field => $value) {
+            if (in_array($field, $fieldNames)) {
                 $qb->andWhere(static::prefixField($field).' = :'.$field)
-                    ->bindParameter(':'.$field, $value, static::$fields[$field]);
+                    ->bindParameter(
+                        ':'.$field,
+                        $value,
+                        static::$fields[$field]
+                    );
             }
 
         }
 
-        if(isset($options['order'])) {
-            foreach($options['order'] as $field => $dir) {
-                $qb->addOrder($field,$dir);
+        if (isset($options['order'])) {
+            foreach ($options['order'] as $field => $dir) {
+                $qb->addOrder($field, $dir);
             }
         }
 
-        if(isset($options['limit'])) {
+        if (isset($options['limit'])) {
             $qb->setMaxResults($options['limit']);
         }
 
-        if(isset($options['offset'])) {
+        if (isset($options['offset'])) {
             $qb->setFirstResult($options['offset']);
         }
 
@@ -294,7 +311,7 @@ abstract class Base
 
         $resultset = $qb->execute();
 
-        while($row = $resultset->fetch()) {
+        while ($row = $resultset->fetch()) {
             $results[] = static::create($row);
         }
         return $results;
@@ -326,7 +343,7 @@ abstract class Base
         $class = static::getClass();
         $object = new $class();
         $object->hydrate($values);
-        if($flush) {
+        if ($flush) {
             $object->save();
         }
         return $object;
@@ -338,7 +355,7 @@ abstract class Base
         $results = array();
         $class = static::getClass();
         $resultset = $qb->execute();
-        while($row = $resultset->fetch()) {
+        while ($row = $resultset->fetch()) {
             $obj = new $class();
             $obj->hydrate($row);
             $results[] = $obj;
@@ -351,7 +368,7 @@ abstract class Base
 
     protected static function getTablename()
     {
-        if(!static::$tableName) {
+        if (!static::$tableName) {
             static::$tableName = strtolower(__CLASS__);
         }
         return static::$tableName;
@@ -360,7 +377,7 @@ abstract class Base
     protected static function getAlias()
     {
         if (!static::$alias) {
-            static ::$alias = substr(self::getTablename(), 0,2);
+            static ::$alias = substr(self::getTablename(), 0, 2);
         }
         return static::$alias;
 
@@ -368,14 +385,14 @@ abstract class Base
 
     protected static function inspectTable()
     {
-        if(!empty(static::$fields)) {
+        if (!empty(static::$fields)) {
             return static::$fields;
         }
 
         $sm = self::$conn->getSchemaManager();
         $columns = $sm->listTableColumns(static::getTablename());
 
-        foreach($columns as $column) {
+        foreach ($columns as $column) {
 
             static::$fields[$column->getName()] = $column->getType()->getName();
 
@@ -387,10 +404,10 @@ abstract class Base
     protected static function getPrefixedFields()
     {
         $fields = '';
-        foreach(static::$fields as $k=>$v) {
+        foreach (static::$fields as $k => $v) {
             $fields .= static::prefixField($k).', ';
         }
-        return trim($fields,', ');
+        return trim($fields, ', ');
     }
 
     protected static function prefixField($field)
@@ -400,13 +417,17 @@ abstract class Base
 
     public static function camelize($word)
     {
-        if(preg_match_all('/\/(.?)/',$word,$got)) {
-            foreach ($got[1] as $k=>$v) {
+        if (preg_match_all('/\/(.?)/', $word, $got)) {
+            foreach ($got[1] as $k => $v) {
                 $got[1][$k] = '::'.strtoupper($v);
             }
-            $word = str_replace($got[0],$got[1],$word);
+            $word = str_replace($got[0], $got[1], $word);
         }
-        return str_replace(' ','',ucwords(preg_replace('/[^A-Z^a-z^0-9^:]+/',' ',$word)));
+        return str_replace(
+            ' ',
+            '',
+            ucwords(preg_replace('/[^A-Z^a-z^0-9^:]+/', ' ', $word))
+        );
     }
 
 }
