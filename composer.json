@@ -6,7 +6,7 @@
     "homepage": "http://preacher.codesushi.co",
     "license": "MIT",
     "authors": [
-        {"name": "Krzysztof Ożóg", "email": "krzysztof.ozog@codesushi.co"},
+        {"name": "Krzysztof Ożóg", "email": "krzysztof.ozog@codesushi.co"}
     ],
     "require": {
         "php": ">=5.3.3",
