@@ -29,4 +29,12 @@ Create model classes that extends coshi\\Preacher\\Model\\Base class.
 
     }
 
-And that's all
+And that's all,
+Now you can do some basic CRUD.
+
+    $u1 = new User();
+    $u1->username = 'Preacher';
+    $u1->password = 'bible';
+    $u1->save();
+
+
