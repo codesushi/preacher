@@ -32,10 +32,9 @@ abstract class Base
 
     public function create()
     {
-        if($this->sm->tablesExist($this->tablename)) {
+        if ($this->sm->tablesExist($this->tablename)) {
             throw new \Exception('Table already exists! Maybe you mean migrate?');
             return false;
-
         }
 
         $table = $this->getTable();
@@ -56,7 +55,7 @@ abstract class Base
     public function drop()
     {
 
-        if($this->exists()) {
+        if ($this->exists()) {
                 $this->getTable();
                 $this->sm->dropTable($this->table);
         } else {
@@ -66,9 +65,8 @@ abstract class Base
 
     public function getTable()
     {
-        if(!$this->table instanceof Table) {
-
-            if($this->sm->tablesExist($this->tablename)) {
+        if (!$this->table instanceof Table) {
+            if ($this->sm->tablesExist($this->tablename)) {
                 $this->table = $this->sm->listTableDetails($this->tablename);
             } else {
                 $table = new Table($this->tablename);
@@ -99,14 +97,13 @@ abstract class Base
     {
         $method = 'migration'.$version.ucfirst($dir);
 
-        if(method_exists($this, $method))
-        {
+        if (method_exists($this, $method)) {
             try {
                 $status = call_user_func_array(array($this, $method));
-                if($status) {
+                if ($status) {
                     $this->setVerision($version);
                 }
-            } catch(\Exception $e) {
+            } catch (\Exception $e) {
                 throw $e;
             }
         } else {
@@ -118,7 +115,7 @@ abstract class Base
     public function isVersioned()
     {
 
-        if($this->sm->tablesExist('preacher_migrations')) {
+        if ($this->sm->tablesExist('preacher_migrations')) {
             $result = $this->conn->executeQuery(
                 'SELECT version FROM preacher_migrations where table_name = ?',
                 array($this->tablename),
@@ -136,7 +133,7 @@ abstract class Base
 
     public function startVersioning()
     {
-        if($this->sm->tablesExist('preacher_migrations')) {
+        if ($this->sm->tablesExist('preacher_migrations')) {
             $result = $this->conn->executeQuery(
                 'SELECT version FROM preacher_migrations where table_name = ?',
                 array($this->tablename),
@@ -144,7 +141,7 @@ abstract class Base
             )
             ->fetch(PDO::FETCH_ASSOC);
 
-            if(!isset($result['version'])) {
+            if (!isset($result['version'])) {
 
                 $this->conn->executeUpdate(
                     'INSERT INTO preacher_migrations (table_name, version) VALUES(?,?)',
@@ -155,14 +152,18 @@ abstract class Base
 
         } else {
             $migrations = new Table('preacher_migrations');
-            $migrations->addColumn('table_name', 'string', array('length'=>64,));
+            $migrations->addColumn('table_name', 'string', array('length'=>64));
             $migrations->setPrimaryKey('table_name');
             //$migrations->addUniqueIndex(array('table_name'));
-            $migrations->addColumn('version','integer',array('default'=>0));
+            $migrations->addColumn('version', 'integer', array('default' => 0));
 
             $this->sm->createTable($migrations);
 
-            $this->conn->executeUpdate('INSERT INTO preacher_migrations (table_name, version) VALUES(?,?)',array($this->tablename, 1), array('string','integer'));
+            $this->conn->executeUpdate(
+                'INSERT INTO preacher_migrations (table_name, version) VALUES(?,?)',
+                array($this->tablename, 1),
+                array('string','integer')
+            );
 
         }
     }

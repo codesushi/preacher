@@ -2,6 +2,8 @@
 
 namespace coshi\Preacher\Model;
 
+use coshi\Preacher\Exception\Model\RecordNotFoundException;
+use coshi\Preacher\Exception\Model\UnknownColumnException;
 
 /**
  * Base
@@ -91,6 +93,8 @@ abstract class Base
         } elseif (array_key_exists($key, $this->fieldsValues)) {
             return $this->fieldsValues[$key];
         }
+
+        throw new UnknownColumnException();
         // TODO: Rise exception
         return null;
 
@@ -141,10 +145,9 @@ abstract class Base
 
         } elseif(array_key_exists($key, static::$fields)) {
             $this->fieldsValues[$key] = $value;
+        } else {
+            throw new UnknownColumnException();
         }
-
-        // TODO : exception
-        //
     }
     /* }}} */
 
@@ -220,6 +223,7 @@ abstract class Base
 
         } else {
             //TODO: Exception;
+            throw new RecordNotFoundException();
             return null;
         }
     }
