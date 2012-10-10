@@ -2,6 +2,8 @@
 
 namespace coshi\Preacher\Model;
 
+use Doctrine\DBAL\Connection;
+
 use coshi\Preacher\Exception\Model\RecordNotFoundException;
 use coshi\Preacher\Exception\Model\UnknownColumnException;
 
@@ -48,7 +50,7 @@ abstract class Base
      * @var mixed
      * @access protected
      */
-    public static $conn;
+    protected static $conn;
 
     /**
      * values of hydrated record
@@ -84,9 +86,10 @@ abstract class Base
      */
     public function __get($key)
     {
-        if (method_exists($this, 'get'.static::camelize($key))) {
+        $getterName = 'get'.static::camelize($key);
+        if (method_exists($this, $getterName)) {
             return call_user_func_array(
-                array($this, 'get'.static::camelize($key)),
+                array($this, $getterName),
                 array()
             );
 
@@ -128,6 +131,8 @@ abstract class Base
 
         static::inspectTable();
 
+        $setterName = 'set'.static::camelize($key);
+
         if ($key == static::$primaryKey) {
 
             if (static::$fields[static::$primaryKey] != 'integer') {
@@ -137,9 +142,9 @@ abstract class Base
                 $this->fieldsValues[$key] = (int) $value;
             }
 
-        } elseif(method_exists($this, 'set'.static::camelize($key)) ) {
+        } elseif(method_exists($this, $setterName) ) {
             call_user_func_array(
-                array($this, 'set'.static::camelize($key)),
+                array($this, $setterName),
                 array($value)
             );
 
@@ -194,6 +199,19 @@ abstract class Base
         return (string) get_called_class();
     }
 
+    /* public getConnection() {{{ */
+    /**
+     * getConnection
+     *
+     * @access public
+     * @return Doctrine\DBAL\Connection;
+     */
+    public function getConnection()
+    {
+        return self::$conn;
+    }
+    /* }}} */
+
     /**
      * find loads and hydrates record identified by id
      *
@@ -244,6 +262,13 @@ abstract class Base
 
     }
 
+    public static function initialize(
+       \Doctrine\DBAL\Connection $conn
+    )
+    {
+        static::$conn = $conn;
+
+    }
     public static function findOneBy($conditions = array())
     {
         static::inspectTable();
@@ -369,6 +394,24 @@ abstract class Base
 
     }
 
+    public static function inspectTable()
+    {
+        if (!empty(static::$fields)) {
+            return static::$fields;
+        }
+
+        $sm = self::$conn->getSchemaManager();
+        $columns = $sm->listTableColumns(static::getTablename());
+
+        foreach ($columns as $column) {
+
+            static::$fields[$column->getName()] = $column->getType()->getName();
+
+        }
+        return static::$fields;
+
+    }
+
 
     protected static function getTablename()
     {
@@ -387,23 +430,7 @@ abstract class Base
 
     }
 
-    protected static function inspectTable()
-    {
-        if (!empty(static::$fields)) {
-            return static::$fields;
-        }
 
-        $sm = self::$conn->getSchemaManager();
-        $columns = $sm->listTableColumns(static::getTablename());
-
-        foreach ($columns as $column) {
-
-            static::$fields[$column->getName()] = $column->getType()->getName();
-
-        }
-        return static::$fields;
-
-    }
 
     protected static function getPrefixedFields()
     {
