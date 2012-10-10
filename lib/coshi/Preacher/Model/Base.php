@@ -394,6 +394,26 @@ abstract class Base
 
     }
 
+    /* public getPrefixedFields() {{{ */
+    /**
+     * getPrefixedFields
+     * Returns string that contains prefixed fields for select
+     * useful for building joins and relations
+     *
+     * @static
+     * @access public
+     * @return void
+     */
+    public static function getPrefixedFields()
+    {
+        $fields = '';
+        foreach (static::$fields as $k => $v) {
+            $fields .= static::prefixField($k).', ';
+        }
+        return trim($fields, ', ');
+    }
+    /* }}} */
+
     public static function inspectTable()
     {
         if (!empty(static::$fields)) {
@@ -412,40 +432,6 @@ abstract class Base
 
     }
 
-
-    protected static function getTablename()
-    {
-        if (!static::$tableName) {
-            static::$tableName = strtolower(__CLASS__);
-        }
-        return static::$tableName;
-    }
-
-    protected static function getAlias()
-    {
-        if (!static::$alias) {
-            static ::$alias = substr(self::getTablename(), 0, 2);
-        }
-        return static::$alias;
-
-    }
-
-
-
-    protected static function getPrefixedFields()
-    {
-        $fields = '';
-        foreach (static::$fields as $k => $v) {
-            $fields .= static::prefixField($k).', ';
-        }
-        return trim($fields, ', ');
-    }
-
-    protected static function prefixField($field)
-    {
-        return sprintf('%s.%s', static::$alias, $field);
-    }
-
     public static function camelize($word)
     {
         if (preg_match_all('/\/(.?)/', $word, $got)) {
@@ -460,5 +446,28 @@ abstract class Base
             ucwords(preg_replace('/[^A-Z^a-z^0-9^:]+/', ' ', $word))
         );
     }
+
+    public static function getAlias()
+    {
+        if (!static::$alias) {
+            static ::$alias = substr(self::getTablename(), 0, 2);
+        }
+        return static::$alias;
+
+    }
+
+    protected static function getTablename()
+    {
+        if (!static::$tableName) {
+            static::$tableName = strtolower(__CLASS__);
+        }
+        return static::$tableName;
+    }
+
+    protected static function prefixField($field)
+    {
+        return sprintf('%s.%s', static::$alias, $field);
+    }
+
 
 }
