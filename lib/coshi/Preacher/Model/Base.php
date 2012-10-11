@@ -103,6 +103,10 @@ abstract class Base
 
     }
 
+    public function __isset($key)
+    {
+        return array_key_exists($key, $this->fieldsValues);
+    }
 
     /* public __set($key, $value) {{{ */
     /**
