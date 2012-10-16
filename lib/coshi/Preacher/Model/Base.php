@@ -423,6 +423,7 @@ abstract class Base
      */
     public static function getPrefixedFields()
     {
+        static::inspectTable();
         $fields = '';
         foreach (static::$fields as $k => $v) {
             $fields .= static::prefixField($k).', ';
