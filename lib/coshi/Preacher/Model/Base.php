@@ -160,7 +160,20 @@ abstract class Base
     }
     /* }}} */
 
+    public function toArray($raw = false)
+    {
+        if ($raw) {
+            return $this->fieldsValues;
+        }
 
+        $row = array();
+
+        foreach ($this->fields as $f => $t) {
+            $row[$f] = $this->{$f};
+
+        }
+        return $row;
+    }
 
     public function save()
     {
