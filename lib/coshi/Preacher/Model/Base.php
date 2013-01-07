@@ -287,8 +287,8 @@ abstract class Base
         foreach ($conditions as $field => $value) {
             if (in_array($field, $fieldNames)) {
                 $qb->andWhere(static::prefixField($field).' = :'.$field)
-                    ->bindParameter(
-                        ':'.$field,
+                    ->setParameter(
+                        $field,
                         $value,
                         static::$fields[$field]
                     );
