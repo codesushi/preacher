@@ -13,6 +13,6 @@
         "doctrine/dbal": "dev-master"
     },
     "autoload": {
-        "psr-0": { "coshi\\Preacher": "lib/" }
+        "psr-0": { "Coshi\\Preacher": "lib/" }
     }
 }
