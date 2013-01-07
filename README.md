@@ -12,7 +12,7 @@ We assume that you know how to get Doctrine\DBAL to work. In your project bootst
 
     use coshi\Preacher\Model\Base as BaseModel;
 
-    BaseModel::$conn = $conn;
+    BaseModel::initialize($conn);
 
 where $conn is Doctrine\DBAL\Connection instance.
 

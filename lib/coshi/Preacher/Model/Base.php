@@ -2,6 +2,8 @@
 
 namespace coshi\Preacher\Model;
 
+use Doctrine\DBAL\Connection;
+
 use coshi\Preacher\Exception\Model\RecordNotFoundException;
 use coshi\Preacher\Exception\Model\UnknownColumnException;
 
@@ -48,7 +50,7 @@ abstract class Base
      * @var mixed
      * @access protected
      */
-    public static $conn;
+    protected static $conn;
 
     /**
      * values of hydrated record
@@ -84,9 +86,10 @@ abstract class Base
      */
     public function __get($key)
     {
-        if (method_exists($this, 'get'.static::camelize($key))) {
+        $getterName = 'get'.static::camelize($key);
+        if (method_exists($this, $getterName)) {
             return call_user_func_array(
-                array($this, 'get'.static::camelize($key)),
+                array($this, $getterName),
                 array()
             );
 
@@ -100,6 +103,10 @@ abstract class Base
 
     }
 
+    public function __isset($key)
+    {
+        return array_key_exists($key, $this->fieldsValues);
+    }
 
     /* public __set($key, $value) {{{ */
     /**
@@ -128,6 +135,8 @@ abstract class Base
 
         static::inspectTable();
 
+        $setterName = 'set'.static::camelize($key);
+
         if ($key == static::$primaryKey) {
 
             if (static::$fields[static::$primaryKey] != 'integer') {
@@ -137,9 +146,9 @@ abstract class Base
                 $this->fieldsValues[$key] = (int) $value;
             }
 
-        } elseif(method_exists($this, 'set'.static::camelize($key)) ) {
+        } elseif(method_exists($this, $setterName) ) {
             call_user_func_array(
-                array($this, 'set'.static::camelize($key)),
+                array($this, $setterName),
                 array($value)
             );
 
@@ -151,7 +160,20 @@ abstract class Base
     }
     /* }}} */
 
+    public function toArray($raw = false)
+    {
+        if ($raw) {
+            return $this->fieldsValues;
+        }
 
+        $row = array();
+
+        foreach ($this->fields as $f => $t) {
+            $row[$f] = $this->{$f};
+
+        }
+        return $row;
+    }
 
     public function save()
     {
@@ -193,6 +215,19 @@ abstract class Base
     {
         return (string) get_called_class();
     }
+
+    /* public getConnection() {{{ */
+    /**
+     * getConnection
+     *
+     * @access public
+     * @return Doctrine\DBAL\Connection;
+     */
+    public function getConnection()
+    {
+        return self::$conn;
+    }
+    /* }}} */
 
     /**
      * find loads and hydrates record identified by id
@@ -244,6 +279,13 @@ abstract class Base
 
     }
 
+    public static function initialize(
+       \Doctrine\DBAL\Connection $conn
+    )
+    {
+        static::$conn = $conn;
+
+    }
     public static function findOneBy($conditions = array())
     {
         static::inspectTable();
@@ -255,8 +297,8 @@ abstract class Base
         foreach ($conditions as $field => $value) {
             if (in_array($field, $fieldNames)) {
                 $qb->andWhere(static::prefixField($field).' = :'.$field)
-                    ->bindParameter(
-                        ':'.$field,
+                    ->setParameter(
+                        $field,
                         $value,
                         static::$fields[$field]
                     );
@@ -369,25 +411,28 @@ abstract class Base
 
     }
 
-
-    protected static function getTablename()
+    /* public getPrefixedFields() {{{ */
+    /**
+     * getPrefixedFields
+     * Returns string that contains prefixed fields for select
+     * useful for building joins and relations
+     *
+     * @static
+     * @access public
+     * @return void
+     */
+    public static function getPrefixedFields()
     {
-        if (!static::$tableName) {
-            static::$tableName = strtolower(__CLASS__);
+        static::inspectTable();
+        $fields = '';
+        foreach (static::$fields as $k => $v) {
+            $fields .= static::prefixField($k).', ';
         }
-        return static::$tableName;
+        return trim($fields, ', ');
     }
+    /* }}} */
 
-    protected static function getAlias()
-    {
-        if (!static::$alias) {
-            static ::$alias = substr(self::getTablename(), 0, 2);
-        }
-        return static::$alias;
-
-    }
-
-    protected static function inspectTable()
+    public static function inspectTable()
     {
         if (!empty(static::$fields)) {
             return static::$fields;
@@ -405,20 +450,6 @@ abstract class Base
 
     }
 
-    protected static function getPrefixedFields()
-    {
-        $fields = '';
-        foreach (static::$fields as $k => $v) {
-            $fields .= static::prefixField($k).', ';
-        }
-        return trim($fields, ', ');
-    }
-
-    protected static function prefixField($field)
-    {
-        return sprintf('%s.%s', static::$alias, $field);
-    }
-
     public static function camelize($word)
     {
         if (preg_match_all('/\/(.?)/', $word, $got)) {
@@ -433,5 +464,28 @@ abstract class Base
             ucwords(preg_replace('/[^A-Z^a-z^0-9^:]+/', ' ', $word))
         );
     }
+
+    public static function getAlias()
+    {
+        if (!static::$alias) {
+            static ::$alias = substr(self::getTablename(), 0, 2);
+        }
+        return static::$alias;
+
+    }
+
+    protected static function getTablename()
+    {
+        if (!static::$tableName) {
+            static::$tableName = strtolower(__CLASS__);
+        }
+        return static::$tableName;
+    }
+
+    protected static function prefixField($field)
+    {
+        return sprintf('%s.%s', static::$alias, $field);
+    }
+
 
 }
