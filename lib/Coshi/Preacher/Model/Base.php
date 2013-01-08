@@ -306,7 +306,7 @@ abstract class Base
         foreach ($values as $k => $v) {
             //$this->{$k} = $v;
             $this->fieldsValues[$k] = static::$table->getColumn($k)
-                ->getType()->convertToPHPValue($v, static::$conn->getDatabasePlatform());``
+                ->getType()->convertToPHPValue($v, static::$conn->getDatabasePlatform());
         }
         return $this;
 
