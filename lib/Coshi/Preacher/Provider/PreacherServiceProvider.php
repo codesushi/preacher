@@ -1,6 +1,6 @@
 <?php
 
-namespace Coshi\Provider;
+namespace Coshi\Preacher\Provider;
 
 use Silex\Application;
 use Silex\ServiceProviderInterface;
