@@ -38,7 +38,7 @@ class PreacherServiceProvider implements ServiceProviderInterface
     public function register(Application $app)
     {
 
-        Doctrine\DBAL\Types\Type::addType(
+        \Doctrine\DBAL\Types\Type::addType(
             '_text',
             'Coshi\Preacher\Types\PgStringArray'
         );
