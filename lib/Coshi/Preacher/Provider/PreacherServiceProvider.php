@@ -37,6 +37,19 @@ class PreacherServiceProvider implements ServiceProviderInterface
 
     public function register(Application $app)
     {
+
+        Doctrine\DBAL\Types\Type::addType(
+            '_text',
+            'Coshi\Preacher\Types\PgStringArray'
+        );
+        $app['db']
+            ->getDatabasePlatform()
+            ->registerDoctrineTypeMapping('_text', '_text');
+        if (isset($app['db'])) {
+            BaseModel::initialize($app['db']);
+        }
+
+
         $app['preacher'] = $app->share(function() use($app) {
 
 
