@@ -460,7 +460,7 @@ abstract class Base
         foreach (static::$fields as $k => $v) {
             $fields .= static::prefixField($k).', ';
         }
-        return trim($fields, ', ');
+        return trim($fields, ',');
     }
 
     public static function inspectTable()
