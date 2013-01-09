@@ -2,6 +2,7 @@
 
 namespace Coshi\Preacher\Provider;
 
+use Doctrine\DBAL\Types\Type;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 
@@ -23,14 +24,8 @@ class PreacherServiceProvider implements ServiceProviderInterface
     public function boot(Application $app)
     {
 
-        \Doctrine\DBAL\Types\Type::addType(
-            '_text',
-            'Coshi\Preacher\Types\PgStringArray'
-        );
-        $app['db']
-            ->getDatabasePlatform()
-            ->registerDoctrineTypeMapping('_text', '_text');
         if (isset($app['db'])) {
+            $this->setupDBAL($app['db']);
             BaseModel::initialize($app['db']);
         }
     }
@@ -38,23 +33,31 @@ class PreacherServiceProvider implements ServiceProviderInterface
     public function register(Application $app)
     {
 
-        \Doctrine\DBAL\Types\Type::addType(
-            '_text',
-            'Coshi\Preacher\Types\PgStringArray'
-        );
-        $app['db']
-            ->getDatabasePlatform()
-            ->registerDoctrineTypeMapping('_text', '_text');
         if (isset($app['db'])) {
+            $this->setupDBAL($app['db']);
             BaseModel::initialize($app['db']);
         }
-
-
         $app['preacher'] = $app->share(function() use($app) {
 
 
         });
 
+
+    }
+
+    public function setupDBAL($conn)
+    {
+
+        Type::overrideType('datetime', 'Doctrine\DBAL\Types\VarDateTimeType');
+        Type::overrideType('datetimetz', 'Doctrine\DBAL\Types\VarDateTimeType');
+        Type::overrideType('time', 'Doctrine\DBAL\Types\VarDateTimeType');
+        Type::addType(
+            '_text',
+            'Coshi\Preacher\Types\PgStringArray'
+        );
+        $conn
+            ->getDatabasePlatform()
+            ->registerDoctrineTypeMapping('_text', '_text');
 
     }
 

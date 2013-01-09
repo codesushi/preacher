@@ -281,6 +281,7 @@ abstract class Base
         $qb->setParameter('id', $id, 'integer');
         $stmt = $qb->execute();
 
+
         if ($result = $stmt->fetch()) {
             $class = static::getClass();
             $record = new $class;
@@ -301,7 +302,7 @@ abstract class Base
      * @access public
      * @return Model\Base
      */
-    public function hyrate($values = array())
+    public function hydrate($values = array())
     {
         foreach ($values as $k => $v) {
             //$this->{$k} = $v;
@@ -460,7 +461,7 @@ abstract class Base
         foreach (static::$fields as $k => $v) {
             $fields .= static::prefixField($k).', ';
         }
-        return trim($fields, ',');
+        return trim($fields, ', ');
     }
 
     public static function inspectTable()
@@ -517,8 +518,35 @@ abstract class Base
 
     protected static function prefixField($field)
     {
-        return sprintf('%s.%s', static::$alias, $field);
+        return str_replace(
+            array(
+                ':field:',':alias:'
+            ),
+            array(
+                $field, static::$alias
+            ),
+            static::getFieldAliasFormat()
+        );
     }
+
+    protected static function getFieldAliasFormat()
+    {
+        if (self::$conn->getDatabasePlatform()->getName() == 'postgresql') {
+        //    return static::getTablename().".:field: AS  :alias:__:field:";
+        }
+
+        return ":alias:.:field:";
+
+    }
+
+    protected static function getAliasSeparator()
+    {
+        if (self::$conn->getDatabasePlatform()->getName() == 'postgresql') {
+            return '__';
+        }
+        return '.';
+    }
+
 
 
 }
