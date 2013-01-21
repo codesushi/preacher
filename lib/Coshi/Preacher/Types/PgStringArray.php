@@ -10,11 +10,11 @@ use Doctrine\DBAL\Platforms\AbstractPlatform;
  */
 class PgStringArray extends Type
 {
-    const PG_STRING_ARRAY = '_text';
+    const PG_STRING_ARRAY = 'textarray';
 
     public function getSqlDeclaration(array $fieldDeclaration, AbstractPlatform $platform)
     {
-        return 'text[]';
+        return 'TEXT[]';
     }
 
     public function convertToPHPValue($value, AbstractPlatform $platform)

@@ -24,8 +24,7 @@ class PreacherServiceProvider implements ServiceProviderInterface
     public function boot(Application $app)
     {
 
-        if (isset($app['db'])) {
-            $this->setupDBAL($app['db']);
+        if (isset($app['db'])) {   
             BaseModel::initialize($app['db']);
         }
     }
@@ -52,12 +51,12 @@ class PreacherServiceProvider implements ServiceProviderInterface
         Type::overrideType('datetimetz', 'Doctrine\DBAL\Types\VarDateTimeType');
         Type::overrideType('time', 'Doctrine\DBAL\Types\VarDateTimeType');
         Type::addType(
-            '_text',
+            'textarray',
             'Coshi\Preacher\Types\PgStringArray'
         );
         $conn
             ->getDatabasePlatform()
-            ->registerDoctrineTypeMapping('_text', '_text');
+            ->registerDoctrineTypeMapping('_text', 'textarray');
 
     }
 

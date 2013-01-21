@@ -108,6 +108,7 @@ abstract class Base
 
     public final function has($field)
     {
+        static::inspectTable();
         return array_key_exists($field, static::$fields);
     }
 
@@ -211,8 +212,23 @@ abstract class Base
     public function save()
     {
 
+        static::inspectTable();
+
+        $types = array();
         $values = $this->fieldsValues;
-        $types = static::$fields;
+        foreach ($values as $k => $v) {
+            if (
+                (
+                    $values[$k] or
+                    !static::$table->getColumn($k)->getNotNull()
+
+                )
+                and $k != static::$primaryKey
+            ) {
+                $values[$k] =$v;
+                $types[] = static::$fields[$k];
+            }
+        }
 
         unset($values[static::$primaryKey]);
         unset($types[static::$primaryKey]);
@@ -223,25 +239,36 @@ abstract class Base
             isset($this->fieldsValues[static::$primaryKey])
             and $this->fieldsValues[static::$primaryKey]
         ) {
+            $types[] = static::$fields[static::$primaryKey];
+            echo "<pre>";
+            var_export($types);
+            var_export($values);
+
             $status = static::$conn->update(
                 static::$tableName,
                 $values,
                 array(
-                    static::$primaryKey => $this->fieldsValues[static::$primaryKey]
+                    static::$primaryKey => (int) $this->fieldsValues[static::$primaryKey]
                 ),
                 $types
             );
+        
         } else {
             $status = static::$conn->insert(
                 static::$tableName,
                 $values,
                 $types
             );
-            $this->fieldsValues[static::$primaryKey] = static::$conn->lastInsertId();
+            $this->fieldsValues[static::$primaryKey] = static::$conn->lastInsertId(static::getSeq());
         }
 
         return $this;
 
+    }
+
+    public static function getSeq()
+    {
+        return sprintf("%s_%s_seq", static::$tableName, static::$primaryKey);
     }
 
     public static function getClass()
@@ -276,7 +303,7 @@ abstract class Base
         $qb = self::$conn->createQueryBuilder();
         $qb->select(static::getPrefixedFields())
             ->from(static::$tableName, static::$alias)
-            ->where(static::prefixField(static::$primaryKey) ." = :id");
+            ->where(static::prefixField(static::$primaryKey, false) ." = :id");
         $qb->setMaxResults(1);
         $qb->setParameter('id', $id, 'integer');
         $stmt = $qb->execute();
@@ -306,8 +333,18 @@ abstract class Base
     {
         foreach ($values as $k => $v) {
             //$this->{$k} = $v;
-            $this->fieldsValues[$k] = static::$table->getColumn($k)
-                ->getType()->convertToPHPValue($v, static::$conn->getDatabasePlatform());
+
+            if (strpos($k,static::getAlias().'__') !== false) {
+                $k = str_replace(static::getAlias().'__','',$k);
+                $this->fieldsValues[$k] =
+                    static::$table->getColumn($k)
+                    ->getType()
+                    ->convertToPHPValue(
+                        $v,
+                        static::$conn->getDatabasePlatform()
+                    );
+            }
+
         }
         return $this;
 
@@ -330,7 +367,7 @@ abstract class Base
 
         foreach ($conditions as $field => $value) {
             if (in_array($field, $fieldNames)) {
-                $qb->andWhere(static::prefixField($field).' = :'.$field)
+                $qb->andWhere(static::prefixField($field, false).' = :'.$field)
                     ->setParameter(
                         $field,
                         $value,
@@ -454,12 +491,12 @@ abstract class Base
      * @access public
      * @return void
      */
-    public static function getPrefixedFields()
+    public static function getPrefixedFields($for_select = true)
     {
         static::inspectTable();
         $fields = '';
         foreach (static::$fields as $k => $v) {
-            $fields .= static::prefixField($k).', ';
+            $fields .= static::prefixField($k, $for_select).', ';
         }
         return trim($fields, ', ');
     }
@@ -501,38 +538,36 @@ abstract class Base
 
     public static function getAlias()
     {
-        if (!static::$alias) {
-            static ::$alias = substr(self::getTablename(), 0, 2);
-        }
-        return static::$alias;
-
+        return static::$alias ? static::$alias : substr(static::getTablename(), 0, 2);
     }
 
-    protected static function getTablename()
+    public static function getTablename()
     {
-        if (!static::$tableName) {
-            static::$tableName = strtolower(__CLASS__);
-        }
+        //cho static::$tableName;
         return static::$tableName;
     }
 
-    protected static function prefixField($field)
+    public static function prefixField($field, $for_select = true)
     {
         return str_replace(
             array(
                 ':field:',':alias:'
             ),
             array(
-                $field, static::$alias
+                $field, static::getAlias()
             ),
-            static::getFieldAliasFormat()
+            static::getFieldAliasFormat($for_select)
         );
     }
 
-    protected static function getFieldAliasFormat()
+    protected static function getFieldAliasFormat($for_select = true)
     {
-        if (self::$conn->getDatabasePlatform()->getName() == 'postgresql') {
-        //    return static::getTablename().".:field: AS  :alias:__:field:";
+        if (self::$conn->getDatabasePlatform()->getName() == 'postgresql' and $for_select) {
+            return static::getAlias().".:field: AS :alias:__:field:";
+        }
+
+        if (self::$conn->getDatabasePlatform()->getName() == 'postgresql' and !$for_select) {
+            return ":alias:.:field:";
         }
 
         return ":alias:.:field:";
